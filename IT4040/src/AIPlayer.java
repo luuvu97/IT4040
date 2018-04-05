@@ -1,6 +1,8 @@
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 //Abstract superclass for all AI players with different strategies
@@ -16,6 +18,7 @@ import java.util.List;
 public abstract class AIPlayer {
 	protected int ROWS = GameMain.ROWS;
 	protected int COLS = GameMain.COLS;
+	protected final int MAX_DEPTH = 6;
 
 	public int defScore[] = { 0, 1, 9, 85, 1538 };
 	public int atkScore[] = { 0, 4, 27, 256, 4616 };
@@ -27,11 +30,11 @@ public abstract class AIPlayer {
 	protected Seed oppSeed;
 	protected GameMain main;
 
-	public String[] pattern = new String[] { "-xx-", "-xxxo",
-	        "oxxx-", "-xxx-", "-x-xx-", "-xx-x-", "-xxxxo", "oxxxx-", "-xxxx-", "xxxxx"};
+	public String[] pattern = new String[] { "-xx-", "-xxxo", "oxxx-", "-xxx-", "-x-xx-", "-xx-x-", "-xxxxo", "oxxxx-",
+			"-xxxx-", "xxxxx" };
 
 	public final int[] scoreMetricPlayer = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 5000 };
-//	public final int[] scoreMetricOpponent = new int[] { 200, 300, 300, 500, 1000, 1000, 2000, 2000, 10000, 2000, 50000 };
+	public final int[] scoreMetricOpponent = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 5000 };
 
 	public AIPlayer(GameMain main) {
 		this.board = main.board;
@@ -49,16 +52,6 @@ public abstract class AIPlayer {
 		}
 		return str;
 	}
-
-	/*
-	 * public BoardSize getBoardSize() { int rowFrom = Integer.MAX_VALUE, rowTo =
-	 * Integer.MIN_VALUE, colFrom = Integer.MAX_VALUE, colTo = Integer.MIN_VALUE;
-	 * for (int row = 0; row < this.ROWS; row++) { for (int col = 0; col <
-	 * this.COLS; col++) { if (this.board[row][col] != Seed.EMPTY) { if (row <=
-	 * rowFrom) { rowFrom = row; } if (row >= rowTo) { rowTo = row; } if (col <=
-	 * colFrom) { colFrom = col; } if (col >= colTo) { colTo = col; } } } } return
-	 * new BoardSize(rowFrom, rowTo, colFrom, colTo); }
-	 */
 
 	public void getDefAtkScore(Seed thePlayer) {
 		this.defAtkScore = new int[this.ROWS][this.COLS];
@@ -222,33 +215,45 @@ public abstract class AIPlayer {
 			return moves;
 		}
 		this.getDefAtkScore(thePlayer);
-		// for (int i = 0; i < this.ROWS; i++) {
-		// for (int j = 0; j < this.COLS; j++) {
-		// System.out.print(this.defAtkScore[i][j] + "\t");
+
+		ValueMove[] valMove = new ValueMove[this.ROWS * this.COLS];
+		for (int row = 0; row < this.ROWS; row++) {
+			for (int col = 0; col < this.COLS; col++) {
+				valMove[row * this.COLS + col] = new ValueMove(this.defAtkScore[row][col], row, col);
+			}
+		}
+
+		// Sort array decending
+		Arrays.sort(valMove, new Comparator<ValueMove>() {
+			@Override
+			public int compare(ValueMove o1, ValueMove o2) {
+				// Sort array decending
+				return Integer.compare(o2.score, o1.score);
+			}
+		});
+
+		// for(ValueMove vm : valMove) {
+		// System.out.println(vm.score);
 		// }
-		// System.out.println();
-		// }
-		// System.out.println();
-		// System.out.println();
 
 		int max = Integer.MIN_VALUE;
-		int maxRow = -1, maxCol = -1;
-		int prevMaxVal = Integer.MAX_VALUE;
-		for (int i = 0; i < 4; i++) {
-			max = Integer.MIN_VALUE;
-			for (int row = 0; row < this.ROWS; row++) {
-				for (int col = 0; col < this.COLS; col++) {
-					if (this.board[row][col] == Seed.EMPTY && this.defAtkScore[row][col] > max
-							&& this.defAtkScore[row][col] <= prevMaxVal) {
-						max = this.defAtkScore[row][col];
-						maxRow = row;
-						maxCol = col;
-					}
+		for (int i = 0; i < valMove.length - 1; i++) {
+			if (valMove[i].score == valMove[i + 1].score) {
+				moves.add(new Move(valMove[i].move.row, valMove[i].move.col));
+			} else {
+				moves.add(new Move(valMove[i].move.row, valMove[i].move.col));
+				if (moves.size() > 4) {
+					break;
 				}
 			}
-			moves.add(new Move(maxRow, maxCol));
-			prevMaxVal = max;
 		}
+
+		// for(Move m : moves) {
+		// System.out.println(m.row + " - " + m.col + " : " +
+		// this.defAtkScore[m.row][m.col]);
+		// }
+		// System.out.println("\n\n");
+
 		return moves;
 	}
 
@@ -265,10 +270,10 @@ public abstract class AIPlayer {
 			for (int i = 0; i < this.pattern.length; i++) {
 				String tmp = this.parsePattern(i, thePlayer);
 				countPlayer = this.numOfContain(str, tmp);
-//				 tmp = this.parsePattern(i, theOppPlayer);
-//				 countOppPlayer = this.numOfContain(str, tmp);
+				tmp = this.parsePattern(i, theOppPlayer);
+				countOppPlayer = this.numOfContain(str, tmp);
 				score += countPlayer * this.scoreMetricPlayer[i];
-//				 score -= countOppPlayer * this.scoreMetricOpponent[i];
+				score -= countOppPlayer * this.scoreMetricOpponent[i];
 			}
 		}
 		if (thePlayer == this.mySeed) {

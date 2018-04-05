@@ -8,8 +8,8 @@ import javax.swing.*;
 @SuppressWarnings("serial")
 public class GameMain extends JFrame {
 	// Named-constants for the game board
-	public static final int ROWS = 20; // ROWS by COLS cells
-	public static final int COLS = 20;
+	public static final int ROWS = 16; // ROWS by COLS cells
+	public static final int COLS = 30;
 	public static final String crossWonPattern = "xxxxx";
 	public static final String noughtWonPattern = "ooooo";
 
