@@ -20,8 +20,8 @@ public abstract class AIPlayer {
 	protected int COLS = GameMain.COLS;
 	protected final int MAX_DEPTH = 6;
 
-	public int defScore[] = { 0, 1, 9, 85, 1538 };
-	public int atkScore[] = { 0, 4, 27, 256, 4616 };
+	public int atkScore[] = { 0, 1, 10, 100, 1000 };
+	public int defScore[] = { 0, 4, 40, 400, 4000 };
 
 	protected int[][] defAtkScore;
 
@@ -89,15 +89,6 @@ public abstract class AIPlayer {
 				}
 			}
 		}
-
-		// for (int i = 0; i < this.ROWS; i++) {
-		// for (int j = 0; j < this.COLS; j++) {
-		// System.out.print(this.defAtkScore[i][j] + "\t");
-		// }
-		// System.out.println();
-		// }
-		// System.out.println();
-		// System.out.println();
 
 		// for each col
 		for (int col = 0; col < this.COLS; col++) {
@@ -257,30 +248,120 @@ public abstract class AIPlayer {
 		return moves;
 	}
 
+	public List<Move> getCandidateMoves1(Seed thePlayer) {
+		List<Move> moves = new ArrayList<Move>();
+		if (this.main.hasWon(mySeed, board) || this.main.hasWon(oppSeed, board)) {
+			return moves;
+		}
+		this.getDefAtkScore(thePlayer);
+
+		for(int i = 0; i < this.ROWS; i++) {
+			for(int j = 0; j < this.COLS; j++) {
+				if(this.defAtkScore[i][j] > 100) {
+					moves.add(new Move(i, j));
+				}
+			}
+		}
+		
+		int max = Integer.MIN_VALUE;
+		int row = -1;
+		int col = -1;
+		if(moves.isEmpty()) {
+			for(int i = 0; i < this.ROWS; i++) {
+				for(int j = 0; j < this.COLS; j++) {
+					if(this.defAtkScore[i][j] > max) {
+						max = this.defAtkScore[i][j];
+						row = i;
+						col = j;
+					}
+				}
+			}
+			moves.add(new Move(row, col));
+		}
+
+		return moves;
+	}
+
 	public abstract Move move();
 
+	public void showBoardInfo(Seed thePlayer) {
+		System.out.println("The Player: " + this.main.getSeedChar(thePlayer));
+		System.out.println("\n-------------------\nThe Board:\n");
+
+		for(int i = 0; i < this.ROWS; i++) {
+			for(int j = 0; j < this.COLS; j++) {
+				String str = this.main.getSeedChar(this.board[i][j]);
+				System.out.print(str + "\t");
+			}
+			System.out.println();
+		}
+		System.out.println("\n-------------------\nThe Def Atk Score:\n");
+		this.getDefAtkScore(thePlayer);
+		for(int i = 0; i < this.ROWS; i++) {
+			for(int j = 0; j < this.COLS; j++) {
+				System.out.print(this.defAtkScore[i][j] + "\t");
+			}
+			System.out.println();
+		}
+		
+		System.out.println("\n-------------------\nCandidate:\n");
+		List<Move> list = this.getCandidateMoves(thePlayer);
+		for(Move m : list) {
+			System.out.println(m.toString() + "\t: " + this.defAtkScore[m.row][m.col]);
+		}
+	}
+	
 	public int evaluate(Seed thePlayer) {
 		// use a string for eval
 		Seed theOppPlayer = (thePlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
 		int score = 0;
 		String evalString = main.getEvalString();
 		String[] arr = evalString.split(";");
+		int scorePlayer = 0;
+		int scoreOpp = 0;
 		int countPlayer, countOppPlayer;
 		for (String str : arr) {
 			for (int i = 0; i < this.pattern.length; i++) {
-				String tmp = this.parsePattern(i, thePlayer);
+				String tmp = this.parsePattern(i, Seed.CROSS);
 				countPlayer = this.numOfContain(str, tmp);
-				tmp = this.parsePattern(i, theOppPlayer);
+				tmp = this.parsePattern(i, Seed.NOUGHT);
 				countOppPlayer = this.numOfContain(str, tmp);
-				score += countPlayer * this.scoreMetricPlayer[i];
-				score -= countOppPlayer * this.scoreMetricOpponent[i];
+				scorePlayer += countPlayer * this.scoreMetricPlayer[i];
+				scoreOpp += countOppPlayer * this.scoreMetricOpponent[i];
 			}
 		}
-		if (thePlayer == this.mySeed) {
-			return score;
-		} else {
-			return -score;
+//		if (thePlayer == this.mySeed) {
+//			return score;
+//		} else {
+//			return -score;
+//		
+//		}
+		System.out.println("\n***********\nThe Score: " + (scoreOpp - scorePlayer));
+		this.showBoardInfo(thePlayer);
+		return scorePlayer - scoreOpp;
+	}
+	
+	public int evaluate() {
+		// use a string for eval
+		int score = 0;
+		String evalString = main.getEvalString();
+		String[] arr = evalString.split(";");
+		int scorePlayer = 0;
+		int scoreOpp = 0;
+		int countPlayer, countOppPlayer;
+		for (String str : arr) {
+			for (int i = 0; i < this.pattern.length; i++) {
+				String tmp = this.parsePattern(i, Seed.NOUGHT);
+				countPlayer = this.numOfContain(str, tmp);
+				tmp = this.parsePattern(i, Seed.CROSS);
+				countOppPlayer = this.numOfContain(str, tmp);
+				scorePlayer += countPlayer * this.scoreMetricPlayer[i];
+				scoreOpp += countOppPlayer * this.scoreMetricOpponent[i];
+			}
 		}
+//		System.out.println("\n***********\nThe Score: " + (scoreOpp - scorePlayer));
+//		this.showBoardInfo(mySeed);
+		return scorePlayer - scoreOpp;
 	}
 
 	public int numOfContain(String src, String str) {
