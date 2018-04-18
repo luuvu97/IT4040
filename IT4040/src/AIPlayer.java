@@ -19,9 +19,10 @@ public abstract class AIPlayer {
 	protected int ROWS = GameMain.ROWS;
 	protected int COLS = GameMain.COLS;
 	protected final int MAX_DEPTH = 6;
+	public static int count = 0;
 
-	public int atkScore[] = { 0, 1, 10, 100, 1000 };
-	public int defScore[] = { 0, 4, 40, 400, 4000 };
+	public int defScore[] = { 0, 1, 10, 100, 1000 };
+	public int atkScore[] = { 0, 4, 40, 400, 4000 };
 
 	protected int[][] defAtkScore;
 
@@ -73,15 +74,19 @@ public abstract class AIPlayer {
 				for (int i = 0; i < 5; i++) {
 					if (this.board[row][col + i] == Seed.EMPTY) {
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.oppSeed) {
+							if (thePlayer == this.mySeed) {
+								//luot may choi. co numNought O => cong
 								this.defAtkScore[row][col + i] += this.atkScore[numNought];
 							} else {
-								this.defAtkScore[row][col + i] += this.atkScore[numNought];
+								//luot nguoi choi. co numNought O => thu
+								this.defAtkScore[row][col + i] += this.defScore[numNought];
 							}
 						} else if (numCross != 0 && numNought == 0) { // computer = 0
 							if (thePlayer == this.mySeed) {
+								//luot may choi. co numCross X => thu
 								this.defAtkScore[row][col + i] += this.defScore[numCross];
 							} else {
+								//luot nguoi choi. co Cross X => cong
 								this.defAtkScore[row][col + i] += this.atkScore[numCross];
 							}
 						}
@@ -104,19 +109,21 @@ public abstract class AIPlayer {
 					}
 				}
 				for (int i = 0; i < 5; i++) {
-
 					if (this.board[row + i][col] == Seed.EMPTY) {
-
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.oppSeed) {
+							if (thePlayer == this.mySeed) {
+								//luot may choi. co numNought O => cong
 								this.defAtkScore[row + i][col] += this.atkScore[numNought];
 							} else {
-								this.defAtkScore[row + i][col] += this.atkScore[numNought];
+								//luot nguoi choi. co numNought O => thu
+								this.defAtkScore[row + i][col] += this.defScore[numNought];
 							}
-						} else if (numCross != 0 && numNought == 0) {
+						} else if (numCross != 0 && numNought == 0) { // computer = 0
 							if (thePlayer == this.mySeed) {
+								//luot may choi. co numCross X => thu
 								this.defAtkScore[row + i][col] += this.defScore[numCross];
 							} else {
+								//luot nguoi choi. co Cross X => cong
 								this.defAtkScore[row + i][col] += this.atkScore[numCross];
 							}
 						}
@@ -143,24 +150,25 @@ public abstract class AIPlayer {
 
 				}
 				for (int i = 0; i < 5; i++) {
-
 					if (this.board[row + i][col + i] == Seed.EMPTY) {
-
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.oppSeed) {
+							if (thePlayer == this.mySeed) {
+								//luot may choi. co numNought O => cong
 								this.defAtkScore[row + i][col + i] += this.atkScore[numNought];
 							} else {
-								this.defAtkScore[row + i][col + i] += this.atkScore[numNought];
+								//luot nguoi choi. co numNought O => thu
+								this.defAtkScore[row + i][col + i] += this.defScore[numNought];
 							}
-						} else if (numCross != 0 && numNought == 0) {
+						} else if (numCross != 0 && numNought == 0) { // computer = 0
 							if (thePlayer == this.mySeed) {
+								//luot may choi. co numCross X => thu
 								this.defAtkScore[row + i][col + i] += this.defScore[numCross];
 							} else {
+								//luot nguoi choi. co Cross X => cong
 								this.defAtkScore[row + i][col + i] += this.atkScore[numCross];
 							}
 						}
 					}
-
 				}
 			}
 		}
@@ -180,17 +188,20 @@ public abstract class AIPlayer {
 				}
 				for (int i = 0; i < 5; i++) {
 					if (this.board[row + i][col - i] == Seed.EMPTY) {
-
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.oppSeed) {
+							if (thePlayer == this.mySeed) {
+								//luot may choi. co numNought O => cong
 								this.defAtkScore[row + i][col - i] += this.atkScore[numNought];
 							} else {
-								this.defAtkScore[row + i][col - i] += this.atkScore[numNought];
+								//luot nguoi choi. co numNought O => thu
+								this.defAtkScore[row + i][col - i] += this.defScore[numNought];
 							}
-						} else if (numCross != 0 && numNought == 0) {
+						} else if (numCross != 0 && numNought == 0) { // computer = 0
 							if (thePlayer == this.mySeed) {
+								//luot may choi. co numCross X => thu
 								this.defAtkScore[row + i][col - i] += this.defScore[numCross];
 							} else {
+								//luot nguoi choi. co Cross X => cong
 								this.defAtkScore[row + i][col - i] += this.atkScore[numCross];
 							}
 						}
@@ -250,7 +261,7 @@ public abstract class AIPlayer {
 
 	public List<Move> getCandidateMoves1(Seed thePlayer) {
 		List<Move> moves = new ArrayList<Move>();
-		if (this.main.hasWon(mySeed, board) || this.main.hasWon(oppSeed, board)) {
+		if (this.main.hasWon(mySeed, board) || this.main.hasWon(oppSeed, board) || this.main.isDraw()) {
 			return moves;
 		}
 		this.getDefAtkScore(thePlayer);
@@ -269,7 +280,7 @@ public abstract class AIPlayer {
 		if(moves.isEmpty()) {
 			for(int i = 0; i < this.ROWS; i++) {
 				for(int j = 0; j < this.COLS; j++) {
-					if(this.defAtkScore[i][j] > max) {
+					if(this.defAtkScore[i][j] > max && this.board[i][j] == Seed.EMPTY) {
 						max = this.defAtkScore[i][j];
 						row = i;
 						col = j;

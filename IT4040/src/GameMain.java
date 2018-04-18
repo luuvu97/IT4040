@@ -8,11 +8,12 @@ import javax.swing.*;
 @SuppressWarnings("serial")
 public class GameMain extends JFrame {
 	// Named-constants for the game board
-	public static final int ROWS = 16; // ROWS by COLS cells
-	public static final int COLS = 30;
+	public static final int ROWS = 20; // ROWS by COLS cells
+	public static final int COLS = 20;
 	public static final String crossWonPattern = "xxxxx";
 	public static final String noughtWonPattern = "ooooo";
 
+	Move lastMove = new Move();
 	// Named-constants of the various dimensions used for graphics drawing
 	public static final int CELL_SIZE = 40; // cell width and height (square)
 	public static final int CANVAS_WIDTH = CELL_SIZE * COLS; // the drawing canvas
@@ -56,8 +57,8 @@ public class GameMain extends JFrame {
 						if (currentState != GameState.CROSS_WON) {
 							// Switch player
 							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-							Move computerMove = computerPlayer.move();
-							board[computerMove.row][computerMove.col] = currentPlayer; // Make a move
+							lastMove = computerPlayer.move();
+							board[lastMove.row][lastMove.col] = currentPlayer; // Make a move
 							updateGame(currentPlayer); // update state
 							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
 //							System.out.println(getEvalString());
@@ -97,6 +98,7 @@ public class GameMain extends JFrame {
 				board[row][col] = Seed.EMPTY; // all cells empty
 			}
 		}
+		this.lastMove = new Move();
 		currentState = GameState.PLAYING; // ready to play
 		currentPlayer = Seed.CROSS; // cross plays first
 		this.computerPlayer = new AIPlayerMiniMax(this);
@@ -171,6 +173,10 @@ public class GameMain extends JFrame {
 				for (int col = 0; col < COLS; ++col) {
 					int x1 = col * CELL_SIZE + CELL_PADDING;
 					int y1 = row * CELL_SIZE + CELL_PADDING;
+					if(row == lastMove.row && col == lastMove.col) {
+						g.setColor(Color.GREEN);
+						g.fillRect(x1 - CELL_PADDING, y1 - CELL_PADDING, CELL_SIZE, CELL_SIZE);
+					}
 					if (board[row][col] == Seed.CROSS) {
 						g2d.setColor(Color.RED);
 						int x2 = (col + 1) * CELL_SIZE - CELL_PADDING;

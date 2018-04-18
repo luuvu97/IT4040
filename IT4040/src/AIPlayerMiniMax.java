@@ -12,7 +12,9 @@ public class AIPlayerMiniMax extends AIPlayer {
 	@Override
 	public Move move() {
 //		ValueMove result = this.minimax(4, mySeed);
-		ValueMove result = this.minimax(4, this.mySeed, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		count = 0;
+		ValueMove result = this.minimax(this.MAX_DEPTH, this.mySeed, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		System.out.println(count);
 		return result.move;
 	}
 
@@ -20,7 +22,7 @@ public class AIPlayerMiniMax extends AIPlayer {
 		// Generate possible next moves in a List<Move>
 		this.showBoardInfo(player);
 		List<Move> candidateMoves = this.getCandidateMoves(player);
-
+		
 		// mySeed is maximizing; while OppSeed is minizing
 		int bestScore = (player == this.mySeed) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
 		int currentScore;
@@ -58,7 +60,7 @@ public class AIPlayerMiniMax extends AIPlayer {
 		// Generate possible next moves in a List<Move>
 		Seed opp = (player == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
 		List<Move> candidateMoves = this.getCandidateMoves1(player);
-
+		count += candidateMoves.size();
 		// mySeed is maximizing; while OppSeed is minizing
 		int score;
 		int bestRow = -1;
