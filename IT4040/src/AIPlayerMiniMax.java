@@ -13,8 +13,12 @@ public class AIPlayerMiniMax extends AIPlayer {
 	public Move move() {
 //		ValueMove result = this.minimax(4, mySeed);
 		count = 0;
+		this.countCatTia = 0;
 		ValueMove result = this.minimax(this.MAX_DEPTH, this.mySeed, Integer.MIN_VALUE, Integer.MAX_VALUE);
-		System.out.println(count);
+		System.out.println(this.count);
+//		System.out.println(this.countCatTia);
+//		System.out.println("\n------");
+		this.showBoardInfo(this.mySeed);
 		return result.move;
 	}
 
@@ -65,9 +69,18 @@ public class AIPlayerMiniMax extends AIPlayer {
 		int score;
 		int bestRow = -1;
 		int bestCol = -1;
+		if(candidateMoves.size() == 1 && depth == this.MAX_DEPTH) {
+			return new ValueMove(0, candidateMoves.get(0).row, candidateMoves.get(0).col);
+		}
 		if (candidateMoves.isEmpty() || depth == 0) {
 //			score = this.evaluate(player);
 			score = this.evaluate();
+			if(this.main.whoWon() == this.mySeed) {
+				score += this.scoreMetricPlayer[this.scoreMetricPlayer.length - 1] * depth;
+			}
+			if(this.main.whoWon() == this.mySeed) {
+				score -= this.scoreMetricPlayer[this.scoreMetricPlayer.length - 1] * depth;
+			}
 			return new ValueMove(score, bestRow, bestCol);
 		} else {
 			for (Move move : candidateMoves) {
@@ -90,6 +103,7 @@ public class AIPlayerMiniMax extends AIPlayer {
 				// undo
 				board[move.row][move.col] = Seed.EMPTY;
 				if(alpha >= beta) {
+					countCatTia++;
 					break;
 				}
 			}

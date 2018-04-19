@@ -143,6 +143,17 @@ public class GameMain extends JFrame {
 		}
 		return str.contains(pattern);
 	}
+	
+	public Seed whoWon() {
+		String str = this.getEvalString();
+		if(str.contains(this.crossWonPattern)) {
+			return Seed.CROSS;
+		}
+		if(str.contains(this.noughtWonPattern)) {
+			return Seed.NOUGHT;
+		}
+		return Seed.EMPTY;
+	}
 
 	/**
 	 * Inner class DrawCanvas (extends JPanel) used for custom graphics drawing.

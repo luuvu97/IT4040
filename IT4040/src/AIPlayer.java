@@ -20,6 +20,7 @@ public abstract class AIPlayer {
 	protected int COLS = GameMain.COLS;
 	protected final int MAX_DEPTH = 6;
 	public static int count = 0;
+	public static int countCatTia = 0;
 
 	public int defScore[] = { 0, 1, 10, 100, 1000 };
 	public int atkScore[] = { 0, 4, 40, 400, 4000 };
@@ -233,11 +234,11 @@ public abstract class AIPlayer {
 				return Integer.compare(o2.score, o1.score);
 			}
 		});
-
-		// for(ValueMove vm : valMove) {
-		// System.out.println(vm.score);
-		// }
-
+//
+//		 for(ValueMove vm : valMove) {
+//		 System.out.println(vm.score);
+//		 }
+		int prevMax = Integer.MIN_VALUE;
 		int max = Integer.MIN_VALUE;
 		for (int i = 0; i < valMove.length - 1; i++) {
 			if (valMove[i].score == valMove[i + 1].score) {
@@ -250,11 +251,11 @@ public abstract class AIPlayer {
 			}
 		}
 
-		// for(Move m : moves) {
-		// System.out.println(m.row + " - " + m.col + " : " +
-		// this.defAtkScore[m.row][m.col]);
-		// }
-		// System.out.println("\n\n");
+//		 for(Move m : moves) {
+//		 System.out.println(m.row + " - " + m.col + " : " +
+//		 this.defAtkScore[m.row][m.col]);
+//		 }
+//		 System.out.println("\n\n");
 
 		return moves;
 	}
@@ -265,58 +266,88 @@ public abstract class AIPlayer {
 			return moves;
 		}
 		this.getDefAtkScore(thePlayer);
-
-		for(int i = 0; i < this.ROWS; i++) {
-			for(int j = 0; j < this.COLS; j++) {
-				if(this.defAtkScore[i][j] > 100) {
-					moves.add(new Move(i, j));
+		
+		int max = Integer.MIN_VALUE;
+		//find cell of cells have maximum score
+		for(int row = 0; row < this.ROWS; row++) {
+			for(int col = 0; col < this.COLS; col++) {
+				if(this.defAtkScore[row][col] > max && this.board[row][col] == Seed.EMPTY) {
+					max = this.defAtkScore[row][col];
+					moves.clear();
+					moves.add(new Move(row, col));
+				}else if(this.defAtkScore[row][col] == max) {
+					moves.add(new Move(row, col));
 				}
 			}
 		}
 		
-		int max = Integer.MIN_VALUE;
-		int row = -1;
-		int col = -1;
-		if(moves.isEmpty()) {
-			for(int i = 0; i < this.ROWS; i++) {
-				for(int j = 0; j < this.COLS; j++) {
-					if(this.defAtkScore[i][j] > max && this.board[i][j] == Seed.EMPTY) {
-						max = this.defAtkScore[i][j];
-						row = i;
-						col = j;
+		Move m = moves.get(0);
+		//neu cell co diem cao nhat nay da co 4 o lien tiep (can danh ngay lap tuc) => lay ucv. khong can tim ucv nua
+		if(this.defAtkScore[m.row][m.col] >= this.defScore[this.defScore.length - 1]) {
+			return moves;
+		}else {
+			//khong co 4 o lien tiep nao => lua chon trong nhieu o khac
+			//chon 4 diem cao nhat (distinct) co the nhieu o cung 1 muc diem
+			//neu khong co 3 o lien tiep nao thi chi can chon 1 o duy nhat
+			moves.clear();
+			int[][] tempScoreBoard =  new int[this.ROWS][this.COLS];
+			for(int row = 0; row < this.ROWS; row++) {
+				tempScoreBoard[row] = Arrays.copyOf(this.defAtkScore[row], this.COLS);
+			}
+			ArrayList<Move> tempList = new ArrayList<Move>();
+			for(int i = 0; i < 4; i++) {
+				max = Integer.MIN_VALUE;
+				for(int row = 0; row < this.ROWS; row++) {
+					for(int col = 0; col < this.COLS; col++) {
+						if(tempScoreBoard[row][col] > max && this.board[row][col] == Seed.EMPTY) {
+							max = tempScoreBoard[row][col];
+							tempList.clear();
+							tempList.add(new Move(row, col));
+						}else if(tempScoreBoard[row][col] == max) {
+							tempList.add(new Move(row, col));
+						}
 					}
 				}
-			}
-			moves.add(new Move(row, col));
-		}
+				if(max >= this.atkScore[2]) {
+					for(Move move : tempList) {
+						moves.add(move);
+						tempScoreBoard[move.row][move.col] = 0;
+					}
+				}else {
+					moves.add(tempList.get(0));
+					break;
+				}
 
-		return moves;
+				tempList.clear();
+			}
+			return moves;
+		}
 	}
 
 	public abstract Move move();
 
 	public void showBoardInfo(Seed thePlayer) {
-		System.out.println("The Player: " + this.main.getSeedChar(thePlayer));
-		System.out.println("\n-------------------\nThe Board:\n");
-
-		for(int i = 0; i < this.ROWS; i++) {
-			for(int j = 0; j < this.COLS; j++) {
-				String str = this.main.getSeedChar(this.board[i][j]);
-				System.out.print(str + "\t");
-			}
-			System.out.println();
-		}
-		System.out.println("\n-------------------\nThe Def Atk Score:\n");
-		this.getDefAtkScore(thePlayer);
-		for(int i = 0; i < this.ROWS; i++) {
-			for(int j = 0; j < this.COLS; j++) {
-				System.out.print(this.defAtkScore[i][j] + "\t");
-			}
-			System.out.println();
-		}
+//		System.out.println("The Player: " + this.main.getSeedChar(thePlayer));
+//		System.out.println("\n-------------------\nThe Board:\n");
+//
+//		for(int i = 0; i < this.ROWS; i++) {
+//			for(int j = 0; j < this.COLS; j++) {
+//				String str = this.main.getSeedChar(this.board[i][j]);
+//				System.out.print(str + "\t");
+//			}
+//			System.out.println();
+//		}
+//		System.out.println("\n-------------------\nThe Def Atk Score:\n");
+//		this.getDefAtkScore(thePlayer);
+//		for(int i = 0; i < this.ROWS; i++) {
+//			for(int j = 0; j < this.COLS; j++) {
+//				System.out.print(this.defAtkScore[i][j] + "\t");
+//			}
+//			System.out.println();
+//		}
 		
 		System.out.println("\n-------------------\nCandidate:\n");
-		List<Move> list = this.getCandidateMoves(thePlayer);
+		List<Move> list = this.getCandidateMoves1(thePlayer);
 		for(Move m : list) {
 			System.out.println(m.toString() + "\t: " + this.defAtkScore[m.row][m.col]);
 		}
