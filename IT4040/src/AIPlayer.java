@@ -19,8 +19,9 @@ public abstract class AIPlayer {
 	protected int ROWS = GameMain.ROWS;
 	protected int COLS = GameMain.COLS;
 	protected final int MAX_DEPTH = 6;
-	public static int count = 0;
-	public static int countCatTia = 0;
+	public static int countTongSoNhanh = 0;
+	public static int countSoLanCatTia = 0;
+	public static int countSoNhanhDuyet = 0;
 
 	public int defScore[] = { 0, 1, 10, 100, 1000 };
 	public int atkScore[] = { 0, 4, 40, 400, 4000 };
@@ -32,12 +33,50 @@ public abstract class AIPlayer {
 	protected Seed oppSeed;
 	protected GameMain main;
 
-	public String[] pattern = new String[] { "-xx-", "-xxxo", "oxxx-", "-xxx-", "-x-xx-", "-xx-x-", "-xxxxo", "oxxxx-",
-			"-xxxx-", "xxxxx" };
+//	public String[] pattern = new String[] { 
+//		"-xx-", "-xxxo", "oxxx-", "-xxx-", "-x-xx-", "-xx-x-", "xx-xx", "-xxxxo", "oxxxx-",
+//			"-xxxx-", "xxxxx"
+//	};
+//
+//	public final int[] scoreMetricPlayer = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
+//	public final int[] scoreMetricOpponent = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
 
-	public final int[] scoreMetricPlayer = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 5000 };
-	public final int[] scoreMetricOpponent = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 5000 };
+	public String[] pattern = new String[] { 
+			"xxxxx",
+			"-xxxx",
+			"oxxxx-", "oxx-xx", "-xxxxo", "xx-xxo",
+			"x-xxx", "xxx-x",
+			"xx-xx",
+			"-xxx--", "-x-xx-", "-xx-x-", "--xxx-",
+			"oxxx--", "oxx-x-", "ox-xx-", "--xxxo", "-x-xxo", "-xx-xo", "o-xxx-o",
+			"-xx--", "--xx-", "-x-x-", "-x--x-",
+			"oxx---", "ox-x--", "ox--x-", "---xxo", "--x-xo", "-x--xo",
+		};
 
+		public final int[] scoreMetricPlayer = new int[] { 
+			100000,
+			10000,
+			1200, 1200, 1200, 1200,
+			1500, 1500,
+			1300,
+			2000, 2000, 2000, 2000,
+			100, 100, 100, 100, 100, 100, 100,
+			100, 100, 100, 100,
+			10, 10, 10, 10, 10, 10,
+		};
+		public final int[] scoreMetricOpponent = new int[] { 
+			100000,
+			10000,
+			1200, 1200, 1200, 1200,
+			1500, 1500,
+			1300,
+			2000, 2000, 2000, 2000,
+			100, 100, 100, 100, 100, 100, 100,
+			100, 100, 100, 100,
+			10, 10, 10, 10, 10, 10,
+		};
+
+	
 	public AIPlayer(GameMain main) {
 		this.board = main.board;
 		this.mySeed = Seed.NOUGHT;
@@ -308,6 +347,9 @@ public abstract class AIPlayer {
 						}
 					}
 				}
+				if(tempList.size() > 1) {
+					i--;
+				}
 				if(max >= this.atkScore[2]) {
 					for(Move move : tempList) {
 						moves.add(move);
@@ -327,24 +369,24 @@ public abstract class AIPlayer {
 	public abstract Move move();
 
 	public void showBoardInfo(Seed thePlayer) {
-//		System.out.println("The Player: " + this.main.getSeedChar(thePlayer));
-//		System.out.println("\n-------------------\nThe Board:\n");
-//
-//		for(int i = 0; i < this.ROWS; i++) {
-//			for(int j = 0; j < this.COLS; j++) {
-//				String str = this.main.getSeedChar(this.board[i][j]);
-//				System.out.print(str + "\t");
-//			}
-//			System.out.println();
-//		}
-//		System.out.println("\n-------------------\nThe Def Atk Score:\n");
-//		this.getDefAtkScore(thePlayer);
-//		for(int i = 0; i < this.ROWS; i++) {
-//			for(int j = 0; j < this.COLS; j++) {
-//				System.out.print(this.defAtkScore[i][j] + "\t");
-//			}
-//			System.out.println();
-//		}
+		System.out.println("The Player: " + this.main.getSeedChar(thePlayer));
+		System.out.println("\n-------------------\nThe Board:\n");
+
+		for(int i = 0; i < this.ROWS; i++) {
+			for(int j = 0; j < this.COLS; j++) {
+				String str = this.main.getSeedChar(this.board[i][j]);
+				System.out.print(str + "\t");
+			}
+			System.out.println();
+		}
+		System.out.println("\n-------------------\nThe Def Atk Score:\n");
+		this.getDefAtkScore(thePlayer);
+		for(int i = 0; i < this.ROWS; i++) {
+			for(int j = 0; j < this.COLS; j++) {
+				System.out.print(this.defAtkScore[i][j] + "\t");
+			}
+			System.out.println();
+		}
 		
 		System.out.println("\n-------------------\nCandidate:\n");
 		List<Move> list = this.getCandidateMoves1(thePlayer);
@@ -372,12 +414,7 @@ public abstract class AIPlayer {
 				scoreOpp += countOppPlayer * this.scoreMetricOpponent[i];
 			}
 		}
-//		if (thePlayer == this.mySeed) {
-//			return score;
-//		} else {
-//			return -score;
-//		
-//		}
+
 		System.out.println("\n***********\nThe Score: " + (scoreOpp - scorePlayer));
 		this.showBoardInfo(thePlayer);
 		return scorePlayer - scoreOpp;

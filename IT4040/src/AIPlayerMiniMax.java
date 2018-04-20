@@ -12,13 +12,15 @@ public class AIPlayerMiniMax extends AIPlayer {
 	@Override
 	public Move move() {
 //		ValueMove result = this.minimax(4, mySeed);
-		count = 0;
-		this.countCatTia = 0;
+		this.countSoNhanhDuyet = 0;
+		this.countTongSoNhanh = 0;
+		this.countSoLanCatTia = 0;
 		ValueMove result = this.minimax(this.MAX_DEPTH, this.mySeed, Integer.MIN_VALUE, Integer.MAX_VALUE);
-		System.out.println(this.count);
-//		System.out.println(this.countCatTia);
-//		System.out.println("\n------");
-		this.showBoardInfo(this.mySeed);
+		System.out.println("Tong so nhanh :" + this.countTongSoNhanh);
+		System.out.println("Tong so nhanh thuc te phai duyet: " + this.countSoNhanhDuyet);
+		System.out.println("So lan cat nhanh: " + this.countSoLanCatTia);
+		System.out.println("\n------");
+//		this.showBoardInfo(this.mySeed);
 		return result.move;
 	}
 
@@ -64,16 +66,16 @@ public class AIPlayerMiniMax extends AIPlayer {
 		// Generate possible next moves in a List<Move>
 		Seed opp = (player == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
 		List<Move> candidateMoves = this.getCandidateMoves1(player);
-		count += candidateMoves.size();
+		this.countTongSoNhanh += candidateMoves.size();
 		// mySeed is maximizing; while OppSeed is minizing
 		int score;
 		int bestRow = -1;
 		int bestCol = -1;
 		if(candidateMoves.size() == 1 && depth == this.MAX_DEPTH) {
+			this.countSoNhanhDuyet++;
 			return new ValueMove(0, candidateMoves.get(0).row, candidateMoves.get(0).col);
 		}
 		if (candidateMoves.isEmpty() || depth == 0) {
-//			score = this.evaluate(player);
 			score = this.evaluate();
 			if(this.main.whoWon() == this.mySeed) {
 				score += this.scoreMetricPlayer[this.scoreMetricPlayer.length - 1] * depth;
@@ -84,6 +86,7 @@ public class AIPlayerMiniMax extends AIPlayer {
 			return new ValueMove(score, bestRow, bestCol);
 		} else {
 			for (Move move : candidateMoves) {
+				this.countSoNhanhDuyet++;
 				board[move.row][move.col] = player;
 				if (player == this.mySeed) { // mySeed computer - maximizing
 					score = minimax(depth - 1, opp, alpha, beta).score;
@@ -103,7 +106,7 @@ public class AIPlayerMiniMax extends AIPlayer {
 				// undo
 				board[move.row][move.col] = Seed.EMPTY;
 				if(alpha >= beta) {
-					countCatTia++;
+					this.countSoLanCatTia++;
 					break;
 				}
 			}
