@@ -18,10 +18,12 @@ import java.util.List;
 public abstract class AIPlayer {
 	protected int ROWS = GameMain.ROWS;
 	protected int COLS = GameMain.COLS;
-	protected final int MAX_DEPTH = 6;
-	public static int countTongSoNhanh = 0;
-	public static int countSoLanCatTia = 0;
-	public static int countSoNhanhDuyet = 0;
+	protected static final int MAX_DEPTH = 6;
+	protected int countTongSoNut = 0;
+	protected int countSoLanCatTia = 0;
+	protected int countSoNhanhDuyet = 0;
+	protected int countSoUngCuVien = 0;
+	public long time = 0;
 
 	public int defScore[] = { 0, 1, 10, 100, 1000 };
 	public int atkScore[] = { 0, 4, 40, 400, 4000 };
@@ -41,9 +43,9 @@ public abstract class AIPlayer {
 //	public final int[] scoreMetricPlayer = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
 //	public final int[] scoreMetricOpponent = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
 
-	public String[] pattern = new String[] { 
+	public String[] pattern1 = new String[] { 
 			"xxxxx",
-			"-xxxx",
+			"-xxxx-",
 			"oxxxx-", "oxx-xx", "-xxxxo", "xx-xxo",
 			"x-xxx", "xxx-x",
 			"xx-xx",
@@ -53,7 +55,7 @@ public abstract class AIPlayer {
 			"oxx---", "ox-x--", "ox--x-", "---xxo", "--x-xo", "-x--xo",
 		};
 
-		public final int[] scoreMetricPlayer = new int[] { 
+		public final int[] scoreMetricPlayer1 = new int[] { 
 			100000,
 			10000,
 			1200, 1200, 1200, 1200,
@@ -64,17 +66,85 @@ public abstract class AIPlayer {
 			100, 100, 100, 100,
 			10, 10, 10, 10, 10, 10,
 		};
-		public final int[] scoreMetricOpponent = new int[] { 
+		
+		public final int[] scoreMetricOpponent1 = new int[] { 
+			1000000,
 			100000,
-			10000,
-			1200, 1200, 1200, 1200,
-			1500, 1500,
-			1300,
-			2000, 2000, 2000, 2000,
-			100, 100, 100, 100, 100, 100, 100,
+			12000, 12000, 12000, 12000,
+			15000, 15000,
+			13000,
+			20000, 20000, 20000, 20000,
+			1000, 1000, 1000, 1000, 1000, 1000, 1000,
 			100, 100, 100, 100,
 			10, 10, 10, 10, 10, 10,
 		};
+		
+		public String[] pattern2 = new String[] { 
+				"-xx--", "--xx-", "-x-x-", "-x--x-",
+				"oxx---", "ox-x--", "ox--x-", "---xxo", "--x-xo", "-x--xo",
+				"--xxx-", "-x-xx-", "-xx-x-", "-xxx--",
+				"oxxx--", "oxx-x-", "ox-xx-", "--xxxo", "-x-xxo", "xx-xo",
+				"-xxxx-",
+				"oxxxx-", "-xxxxo", "oxx-xx", "xx-xxo", "ox-xxx", "xxx-xo",
+				"o-xxxxo", "oxxxx-o",
+				"xxxxx"
+			};
+		
+		public int[] scoreMetricPlayer2 =  new int[] {
+				2, 2, 2, 2,
+				1, 1, 1, 1, 1, 1,
+				2000, 2000, 2000, 2000,
+				2, 2, 2, 2, 2, 2,
+				2000,
+				200, 200, 200, 200, 200, 200, 200, 200,
+				2000,
+		};
+		
+		public int[] scoreMetricOpponent2 =  new int[] {
+				2, 2, 2, 2,
+				1, 1, 1, 1, 1, 1,
+				2000, 2000, 2000, 2000,
+				20, 20, 20, 20, 20, 20,
+				20000,
+				2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+				20000,
+		};
+		
+		public String[] pattern3 = new String[] { 
+				"-xxx-",
+				"oxxx--", "--xxxo",
+				"xxxxx",
+				"oxxxx-", "-xxxxo",
+				"-xx-x-", "-x-xx-",
+				"x-xxx",
+				"xx-xx",
+			};
+		
+		public int[] scoreMetricPlayer3 =  new int[] {
+				100000,
+				10000, 100000,
+				10000000,
+				1000000, 10000000,
+				100050, 100050,
+				100000, 100000,
+				100050,
+				100050,
+		};
+		
+		public int[] scoreMetricOpponent3 =  new int[] {
+				100000,
+				10000, 100000,
+				10000000,
+				1000000, 10000000,
+				100050, 100050,
+				100000, 100000,
+				100050,
+				100050,
+		};
+		
+		public String[] pattern = pattern3;
+		public int[] scoreMetricPlayer = this.scoreMetricPlayer3;
+		public int[] scoreMetricOpponent = this.scoreMetricOpponent3;
 
 	
 	public AIPlayer(GameMain main) {

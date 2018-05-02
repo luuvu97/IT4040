@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 /**
  * Tic-Tac-Toe: Two-player Graphics version with Simple-OO
@@ -32,10 +33,16 @@ public class GameMain extends JFrame {
 	protected Seed[][] board; // Game board of ROWS-by-COLS cells
 	protected DrawCanvas canvas; // Drawing canvas (JPanel) for the game board
 	protected JLabel statusBar; // Status Bar
+	protected JLabel playerTurn;
+	protected JButton resignBtn;
+	protected JButton newGameBtn;
 	protected AIPlayer computerPlayer;
+	protected DboGame dboGame;
+	protected Move nextMove;
 
 	/** Constructor to setup the game and the GUI components */
 	public GameMain() {
+		Font myFont = new Font(Font.DIALOG_INPUT, Font.BOLD, 18);
 		canvas = new DrawCanvas(); // Construct a drawing canvas (a JPanel)
 		canvas.setPreferredSize(new Dimension(CANVAS_WIDTH, CANVAS_HEIGHT));
 
@@ -52,35 +59,82 @@ public class GameMain extends JFrame {
 				if (currentState == GameState.PLAYING) {
 					if (rowSelected >= 0 && rowSelected < ROWS && colSelected >= 0 && colSelected < COLS
 							&& board[rowSelected][colSelected] == Seed.EMPTY) {
-						board[rowSelected][colSelected] = currentPlayer; // Make a move
-						updateGame(currentPlayer); // update state
+//						board[rowSelected][colSelected] = currentPlayer; // Make a move
+						updateGame(currentPlayer,  rowSelected, colSelected); // update state
+						repaint(); // Call-back paintComponent().
 						if (currentState != GameState.CROSS_WON) {
+//							computerMove();
 							// Switch player
 							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
 							lastMove = computerPlayer.move();
 							board[lastMove.row][lastMove.col] = currentPlayer; // Make a move
-							updateGame(currentPlayer); // update state
+							updateGame(currentPlayer,  lastMove.row, lastMove.col); // update state
 							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-//							System.out.println(getEvalString());
+							System.out.println(getEvalString());
 						}
 					}
-				} else { // game over
-					initGame(); // restart the game
-				}
+					repaint(); // Call-back paintComponent().
+				} 
 				// Refresh the drawing canvas
-				repaint(); // Call-back paintComponent().
 			}
 		});
 
 		// Setup the status bar (JLabel) to display status message
 		statusBar = new JLabel("  ");
-		statusBar.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD, 15));
+		statusBar.setFont(myFont);
 		statusBar.setBorder(BorderFactory.createEmptyBorder(2, 5, 4, 5));
 
+		this.resignBtn = new JButton("Resign");
+		this.resignBtn.setFont(myFont);
+		this.resignBtn.setForeground(Color.WHITE);
+		this.resignBtn.setBackground(Color.RED);
+		this.resignBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+		this.resignBtn.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				resign();				
+			}
+		});
+		
+		this.newGameBtn = new JButton("New Game");
+		this.newGameBtn.setFont(myFont);
+		this.newGameBtn.setBackground(Color.GREEN);
+		this.newGameBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+		this.newGameBtn.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				initGame();	
+				repaint();
+			}
+		});
+		
+		JPanel rightPanel = new JPanel();
+		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+		JLabel turnLabel = new JLabel();
+		turnLabel.setText("Player Turn");
+		turnLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		turnLabel.setFont(myFont);
+		
+		this.playerTurn = new JLabel();
+		this.playerTurn.setFont(new Font(Font.DIALOG_INPUT, Font.BOLD, 32));
+		this.playerTurn.setAlignmentX(Component.CENTER_ALIGNMENT);
+		this.playerTurn.setText("X");
+		
+		rightPanel.add(turnLabel);
+		rightPanel.add(this.playerTurn);
+		rightPanel.add(this.newGameBtn);
+		this.newGameBtn.setBorder(new EmptyBorder(5, 5, 5, 5));
+		rightPanel.add(this.resignBtn);
+		this.resignBtn.setBorder(new EmptyBorder(5, 5, 5, 5));
+		
+		
 		Container cp = getContentPane();
 		cp.setLayout(new BorderLayout());
 		cp.add(canvas, BorderLayout.CENTER);
 		cp.add(statusBar, BorderLayout.PAGE_END); // same as SOUTH
+		cp.add(rightPanel, BorderLayout.EAST);
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack(); // pack all the components in this JFrame
@@ -89,7 +143,25 @@ public class GameMain extends JFrame {
 
 		board = new Seed[ROWS][COLS]; // allocate array
 		initGame(); // initialize the game board contents and game variables
+		
+		this.dboGame = new DboGame(this);
 	}
+	
+//	public void computerMove() {
+//		currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+//		lastMove = computerPlayer.move();
+//		board[lastMove.row][lastMove.col] = currentPlayer; // Make a move
+//		updateGame(currentPlayer,  lastMove.row, lastMove.col); // update state
+//		currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+//		if(currentState == GameState.PLAYING) {
+//			if(nextMove!= null) {
+//				this.board[nextMove.row][nextMove.col] = currentPlayer;
+//				updateGame(currentPlayer,  nextMove.row, nextMove.col); // update state
+//				repaint();
+//				computerMove();
+//			}
+//		}
+//	}
 
 	/** Initialize the game-board contents and the status */
 	public void initGame() {
@@ -98,6 +170,7 @@ public class GameMain extends JFrame {
 				board[row][col] = Seed.EMPTY; // all cells empty
 			}
 		}
+		this.newGameBtn.setVisible(false);
 		this.lastMove = new Move();
 		currentState = GameState.PLAYING; // ready to play
 		currentPlayer = Seed.CROSS; // cross plays first
@@ -108,9 +181,14 @@ public class GameMain extends JFrame {
 	 * Update the currentState after the player with "theSeed" has placed on
 	 * (rowSelected, colSelected).
 	 */
-	public void updateGame(Seed theSeed) {
+	public void updateGame(Seed theSeed, int row, int col) {
+		this.board[row][col] = theSeed;
+		this.dboGame.move(row, col);
 		if (hasWon(theSeed, this.board)) { // check for win
-			currentState = (theSeed == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
+			currentState =(theSeed == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
+			this.newGameBtn.setVisible(true);
+			this.resignBtn.setVisible(false);
+			this.dboGame.save();
 		} else if (isDraw()) { // check for draw
 			currentState = GameState.DRAW;
 		}
@@ -153,6 +231,13 @@ public class GameMain extends JFrame {
 			return Seed.NOUGHT;
 		}
 		return Seed.EMPTY;
+	}
+	
+	public void resign() {
+		this.dboGame.save();
+		this.currentState = GameState.NOUGHT_WON;
+		this.newGameBtn.setVisible(true);
+		this.repaint();
 	}
 
 	/**
@@ -203,21 +288,22 @@ public class GameMain extends JFrame {
 
 			// Print status-bar message
 			if (currentState == GameState.PLAYING) {
-				statusBar.setForeground(Color.BLACK);
 				if (currentPlayer == Seed.CROSS) {
-					statusBar.setText("X's Turn");
+					playerTurn.setForeground(Color.RED);
+					playerTurn.setText("X");
 				} else {
-					statusBar.setText("O's Turn");
+					playerTurn.setForeground(Color.BLUE);
+					playerTurn.setText("O");
 				}
 			} else if (currentState == GameState.DRAW) {
-				statusBar.setForeground(Color.RED);
-				statusBar.setText("It's a Draw! Click to play again.");
+				playerTurn.setForeground(Color.GREEN);
+				playerTurn.setText("It's a Draw! Click to play again.");
 			} else if (currentState == GameState.CROSS_WON) {
-				statusBar.setForeground(Color.RED);
-				statusBar.setText("'X' Won! Click to play again.");
+				playerTurn.setForeground(Color.RED);
+				playerTurn.setText("X WON");
 			} else if (currentState == GameState.NOUGHT_WON) {
-				statusBar.setForeground(Color.RED);
-				statusBar.setText("'O' Won! Click to play again.");
+				playerTurn.setForeground(Color.BLUE);
+				playerTurn.setText("O WON");
 			}
 		}
 	}
