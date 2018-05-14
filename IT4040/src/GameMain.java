@@ -2,6 +2,9 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  * Tic-Tac-Toe: Two-player Graphics version with Simple-OO
@@ -32,13 +35,18 @@ public class GameMain extends JFrame {
 
 	protected Seed[][] board; // Game board of ROWS-by-COLS cells
 	protected DrawCanvas canvas; // Drawing canvas (JPanel) for the game board
-	protected JLabel statusBar; // Status Bar
 	protected JLabel playerTurn;
 	protected JButton resignBtn;
 	protected JButton newGameBtn;
 	protected AIPlayer computerPlayer;
 	protected DboGame dboGame;
-	protected Move nextMove;
+	protected boolean isComputerPlayFirst;
+	protected AIMode aiMode;
+	protected GetCandidateMode getCandidateMode;
+	protected JComboBox cbGetCandidateMode;
+	protected JCheckBox cbComputerPlayFirst;
+	protected JRadioButton rdAlphaBeta;
+	protected JRadioButton rdMinimax;
 
 	/** Constructor to setup the game and the GUI components */
 	public GameMain() {
@@ -46,53 +54,17 @@ public class GameMain extends JFrame {
 		canvas = new DrawCanvas(); // Construct a drawing canvas (a JPanel)
 		canvas.setPreferredSize(new Dimension(CANVAS_WIDTH, CANVAS_HEIGHT));
 
-		// The canvas (JPanel) fires a MouseEvent upon mouse-click
-		canvas.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) { // mouse-clicked handler
-				int mouseX = e.getX();
-				int mouseY = e.getY();
-				// Get the row and column clicked
-				int rowSelected = mouseY / CELL_SIZE;
-				int colSelected = mouseX / CELL_SIZE;
-
-				if (currentState == GameState.PLAYING) {
-					if (rowSelected >= 0 && rowSelected < ROWS && colSelected >= 0 && colSelected < COLS
-							&& board[rowSelected][colSelected] == Seed.EMPTY) {
-//						board[rowSelected][colSelected] = currentPlayer; // Make a move
-						updateGame(currentPlayer,  rowSelected, colSelected); // update state
-						repaint(); // Call-back paintComponent().
-						if (currentState != GameState.CROSS_WON) {
-//							computerMove();
-							// Switch player
-							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-							lastMove = computerPlayer.move();
-							board[lastMove.row][lastMove.col] = currentPlayer; // Make a move
-							updateGame(currentPlayer,  lastMove.row, lastMove.col); // update state
-							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-							System.out.println(getEvalString());
-						}
-					}
-					repaint(); // Call-back paintComponent().
-				} 
-				// Refresh the drawing canvas
-			}
-		});
-
-		// Setup the status bar (JLabel) to display status message
-		statusBar = new JLabel("  ");
-		statusBar.setFont(myFont);
-		statusBar.setBorder(BorderFactory.createEmptyBorder(2, 5, 4, 5));
-
 		this.resignBtn = new JButton("Resign");
 		this.resignBtn.setFont(myFont);
 		this.resignBtn.setForeground(Color.WHITE);
 		this.resignBtn.setBackground(Color.RED);
+		this.resignBtn.setVisible(false);
 		this.resignBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 		this.resignBtn.addActionListener(new ActionListener() {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				getExternData();
 				resign();				
 			}
 		});
@@ -109,6 +81,9 @@ public class GameMain extends JFrame {
 				repaint();
 			}
 		});
+		
+		JPanel navPanel = new JPanel();
+		navPanel.setLayout(new BorderLayout());
 		
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
@@ -129,40 +104,123 @@ public class GameMain extends JFrame {
 		rightPanel.add(this.resignBtn);
 		this.resignBtn.setBorder(new EmptyBorder(5, 5, 5, 5));
 		
+		navPanel.add(rightPanel, BorderLayout.CENTER);
+		
+		JPanel gameOption = new JPanel();
+		gameOption.setLayout(new BoxLayout(gameOption, BoxLayout.Y_AXIS));
+		gameOption.setBorder(new TitledBorder("Option"));
+		gameOption.setFont(myFont);
+		
+		this.cbComputerPlayFirst = new JCheckBox("Computer play First");
+		this.cbComputerPlayFirst.setFont(myFont);
+		this.cbComputerPlayFirst.setAlignmentX(Component.LEFT_ALIGNMENT);
+		
+		String[] str = {"Around 1", "Def-Atk Score"};
+		this.cbGetCandidateMode = new JComboBox(str);
+		this.cbGetCandidateMode.setFont(myFont);
+		this.cbGetCandidateMode.setSelectedIndex(1);
+		this.cbGetCandidateMode.setAlignmentX(Component.LEFT_ALIGNMENT);
+		
+		JPanel tmpPanel = new JPanel();
+		ButtonGroup bgAiMode = new ButtonGroup();
+		rdAlphaBeta = new JRadioButton("ALPHA-BETA");
+		rdAlphaBeta.setFont(myFont);
+		rdAlphaBeta.setSelected(true);
+
+		rdMinimax = new JRadioButton("MINIMAX");
+		rdMinimax.setFont(myFont);
+		
+		bgAiMode.add(rdAlphaBeta);
+		bgAiMode.add(rdMinimax);
+		tmpPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		tmpPanel.add(rdAlphaBeta);
+		tmpPanel.add(rdMinimax);
+		
+		gameOption.add(tmpPanel);
+		gameOption.add(cbGetCandidateMode);
+		gameOption.add(this.cbComputerPlayFirst);
+		
+		navPanel.add(gameOption, BorderLayout.PAGE_END);
 		
 		Container cp = getContentPane();
 		cp.setLayout(new BorderLayout());
 		cp.add(canvas, BorderLayout.CENTER);
-		cp.add(statusBar, BorderLayout.PAGE_END); // same as SOUTH
-		cp.add(rightPanel, BorderLayout.EAST);
+		cp.add(navPanel, BorderLayout.EAST);
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		pack(); // pack all the components in this JFrame
-		setTitle("Tic Tac Toe");
+		setTitle("Caro");
 		setVisible(true); // show this JFrame
 
 		board = new Seed[ROWS][COLS]; // allocate array
-		initGame(); // initialize the game board contents and game variables
-		
-		this.dboGame = new DboGame(this);
+	}
+
+	public void play() {
+		if(this.isComputerPlayFirst == true) {
+			this.board[this.ROWS / 2][this.COLS / 2] = this.currentPlayer;
+			updateGame(currentPlayer,  this.ROWS / 2, this.COLS / 2); // update state
+			currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+		}
+		repaint(); // Call-back paintComponent().
+		this.setListener();
 	}
 	
-//	public void computerMove() {
-//		currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-//		lastMove = computerPlayer.move();
-//		board[lastMove.row][lastMove.col] = currentPlayer; // Make a move
-//		updateGame(currentPlayer,  lastMove.row, lastMove.col); // update state
-//		currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-//		if(currentState == GameState.PLAYING) {
-//			if(nextMove!= null) {
-//				this.board[nextMove.row][nextMove.col] = currentPlayer;
-//				updateGame(currentPlayer,  nextMove.row, nextMove.col); // update state
-//				repaint();
-//				computerMove();
-//			}
-//		}
-//	}
+	public void setListener() {
+		// The canvas (JPanel) fires a MouseEvent upon mouse-click
+		this.canvas.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) { // mouse-clicked handler
+				int mouseX = e.getX();
+				int mouseY = e.getY();
+				// Get the row and column clicked
+				int rowSelected = mouseY / CELL_SIZE;
+				int colSelected = mouseX / CELL_SIZE;
 
+				if (currentState == GameState.PLAYING) {
+					if (rowSelected >= 0 && rowSelected < ROWS && colSelected >= 0 && colSelected < COLS
+							&& board[rowSelected][colSelected] == Seed.EMPTY) {
+						updateGame(currentPlayer,  rowSelected, colSelected); // update state
+						if (currentState == GameState.PLAYING) {
+							// Switch player
+							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+							lastMove = computerPlayer.move();
+							board[lastMove.row][lastMove.col] = currentPlayer; // Make a move
+							updateGame(currentPlayer,  lastMove.row, lastMove.col); // update state
+							currentPlayer = (currentPlayer == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+						}
+					}
+					repaint(); // Call-back paintComponent().
+				} 
+				// Refresh the drawing canvas
+			}
+		});
+
+	}
+	
+	public void getExternData() {
+		if(this.cbComputerPlayFirst.isSelected()) {
+			this.isComputerPlayFirst = true;
+		}else {
+			this.isComputerPlayFirst = false;
+		}
+		
+		if(this.rdAlphaBeta.isSelected()) {
+			this.aiMode = AIMode.ALPHABETA;
+		}else {
+			this.aiMode = AIMode.MINIMAX;
+		}
+		
+		String[] str = {"Around 1", "Def-Atk Score"};
+		int index = this.cbGetCandidateMode.getSelectedIndex();
+		if(index == 0) {
+			this.getCandidateMode = GetCandidateMode.AROUND1;
+			AIPlayer.MAX_DEPTH = 3;
+		}else {
+			this.getCandidateMode = GetCandidateMode.DEFATK;
+			AIPlayer.MAX_DEPTH = 5;
+		}
+	}
+	
 	/** Initialize the game-board contents and the status */
 	public void initGame() {
 		for (int row = 0; row < ROWS; ++row) {
@@ -171,10 +229,16 @@ public class GameMain extends JFrame {
 			}
 		}
 		this.newGameBtn.setVisible(false);
+		this.resignBtn.setVisible(true);
 		this.lastMove = new Move();
-		currentState = GameState.PLAYING; // ready to play
-		currentPlayer = Seed.CROSS; // cross plays first
-		this.computerPlayer = new AIPlayerMiniMax(this);
+		this.playerTurn.setText("X");
+		this.currentState = GameState.PLAYING; // ready to play
+		this.currentPlayer = Seed.CROSS; // cross plays first
+		this.getExternData();
+		this.dboGame = new DboGame(this, this.aiMode, this.getCandidateMode, this.isComputerPlayFirst);
+		this.play();
+		Seed computer = (this.isComputerPlayFirst ? Seed.CROSS : Seed.NOUGHT);
+		this.computerPlayer = new AIPlayerMiniMax(this, computer);
 	}
 
 	/**
@@ -188,6 +252,7 @@ public class GameMain extends JFrame {
 			currentState =(theSeed == Seed.CROSS) ? GameState.CROSS_WON : GameState.NOUGHT_WON;
 			this.newGameBtn.setVisible(true);
 			this.resignBtn.setVisible(false);
+			this.dboGame.setWinner(theSeed);
 			this.dboGame.save();
 		} else if (isDraw()) { // check for draw
 			currentState = GameState.DRAW;
@@ -234,7 +299,7 @@ public class GameMain extends JFrame {
 	}
 	
 	public void resign() {
-		this.dboGame.save();
+//		this.dboGame.save();
 		this.currentState = GameState.NOUGHT_WON;
 		this.newGameBtn.setVisible(true);
 		this.repaint();

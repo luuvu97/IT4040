@@ -18,15 +18,17 @@ import java.util.List;
 public abstract class AIPlayer {
 	protected int ROWS = GameMain.ROWS;
 	protected int COLS = GameMain.COLS;
-	protected static final int MAX_DEPTH = 6;
-	protected int countTongSoNut = 0;
-	protected int countSoLanCatTia = 0;
-	protected int countSoNhanhDuyet = 0;
-	protected int countSoUngCuVien = 0;
+	protected static int MAX_DEPTH = 5;
+	protected AIMode aiMode;
+	protected GetCandidateMode getCandidateMode;
+	protected int countTongSoNut = 0;	//Tong so nut tren cay tim kiem
+	protected int countSoLanCatTia = 0;	//so lan cat tia
+	protected int countSoNhanhDuyet = 0;	//so nut thuc te phai duyet qua tren cay tim kiem
+	protected int countSoUngCuVien = 0;	//so UCV o nuoc di dau tien
 	public long time = 0;
 
 	public int defScore[] = { 0, 1, 10, 100, 1000 };
-	public int atkScore[] = { 0, 4, 40, 400, 4000 };
+	public int atkScore[] = { 0, 2, 20, 110, 4000 };
 
 	protected int[][] defAtkScore;
 
@@ -34,14 +36,6 @@ public abstract class AIPlayer {
 	protected Seed mySeed;
 	protected Seed oppSeed;
 	protected GameMain main;
-
-//	public String[] pattern = new String[] { 
-//		"-xx-", "-xxxo", "oxxx-", "-xxx-", "-x-xx-", "-xx-x-", "xx-xx", "-xxxxo", "oxxxx-",
-//			"-xxxx-", "xxxxx"
-//	};
-//
-//	public final int[] scoreMetricPlayer = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
-//	public final int[] scoreMetricOpponent = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
 
 	public String[] pattern1 = new String[] { 
 			"xxxxx",
@@ -68,90 +62,38 @@ public abstract class AIPlayer {
 		};
 		
 		public final int[] scoreMetricOpponent1 = new int[] { 
-			1000000,
 			100000,
-			12000, 12000, 12000, 12000,
-			15000, 15000,
-			13000,
-			20000, 20000, 20000, 20000,
-			1000, 1000, 1000, 1000, 1000, 1000, 1000,
+			10000,
+			1200, 1200, 1200, 1200,
+			1500, 1500,
+			1300,
+			2000, 2000, 2000, 2000,
+			100, 100, 100, 100, 100, 100, 100,
 			100, 100, 100, 100,
 			10, 10, 10, 10, 10, 10,
 		};
 		
+		
 		public String[] pattern2 = new String[] { 
-				"-xx--", "--xx-", "-x-x-", "-x--x-",
-				"oxx---", "ox-x--", "ox--x-", "---xxo", "--x-xo", "-x--xo",
-				"--xxx-", "-x-xx-", "-xx-x-", "-xxx--",
-				"oxxx--", "oxx-x-", "ox-xx-", "--xxxo", "-x-xxo", "xx-xo",
-				"-xxxx-",
-				"oxxxx-", "-xxxxo", "oxx-xx", "xx-xxo", "ox-xxx", "xxx-xo",
-				"o-xxxxo", "oxxxx-o",
-				"xxxxx"
+				"-xx-", "-xxxo", "oxxx-", "-xxx-", "-x-xx-", "-xx-x-", "xx-xx", "-xxxxo", "oxxxx-",
+					"-xxxx-", "xxxxx"
 			};
+
+			public final int[] scoreMetricPlayer2 = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
+			public final int[] scoreMetricOpponent2 = new int[] { 20, 30, 30, 50, 50, 50, 100, 100, 1000, 1000, 5000 };
 		
-		public int[] scoreMetricPlayer2 =  new int[] {
-				2, 2, 2, 2,
-				1, 1, 1, 1, 1, 1,
-				2000, 2000, 2000, 2000,
-				2, 2, 2, 2, 2, 2,
-				2000,
-				200, 200, 200, 200, 200, 200, 200, 200,
-				2000,
-		};
-		
-		public int[] scoreMetricOpponent2 =  new int[] {
-				2, 2, 2, 2,
-				1, 1, 1, 1, 1, 1,
-				2000, 2000, 2000, 2000,
-				20, 20, 20, 20, 20, 20,
-				20000,
-				2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-				20000,
-		};
-		
-		public String[] pattern3 = new String[] { 
-				"-xxx-",
-				"oxxx--", "--xxxo",
-				"xxxxx",
-				"oxxxx-", "-xxxxo",
-				"-xx-x-", "-x-xx-",
-				"x-xxx",
-				"xx-xx",
-			};
-		
-		public int[] scoreMetricPlayer3 =  new int[] {
-				100000,
-				10000, 100000,
-				10000000,
-				1000000, 10000000,
-				100050, 100050,
-				100000, 100000,
-				100050,
-				100050,
-		};
-		
-		public int[] scoreMetricOpponent3 =  new int[] {
-				100000,
-				10000, 100000,
-				10000000,
-				1000000, 10000000,
-				100050, 100050,
-				100000, 100000,
-				100050,
-				100050,
-		};
-		
-		public String[] pattern = pattern3;
-		public int[] scoreMetricPlayer = this.scoreMetricPlayer3;
-		public int[] scoreMetricOpponent = this.scoreMetricOpponent3;
+		public String[] pattern = pattern1;
+		public int[] scoreMetricPlayer = this.scoreMetricPlayer1;
+		public int[] scoreMetricOpponent = this.scoreMetricOpponent1;
 
 	
-	public AIPlayer(GameMain main) {
+	public AIPlayer(GameMain main, Seed computer) {
 		this.board = main.board;
-		this.mySeed = Seed.NOUGHT;
-		this.oppSeed = Seed.CROSS;
+		this.mySeed = computer;
+		this.oppSeed = (computer == Seed.CROSS ? Seed.NOUGHT : Seed.CROSS);
 		this.main = main;
+		this.aiMode = this.main.aiMode;
+		this.getCandidateMode = this.main.getCandidateMode;
 	}
 
 	public String parsePattern(int index, Seed thePlayer) {
@@ -184,19 +126,19 @@ public abstract class AIPlayer {
 				for (int i = 0; i < 5; i++) {
 					if (this.board[row][col + i] == Seed.EMPTY) {
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numNought O => cong
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numNought O => cong
 								this.defAtkScore[row][col + i] += this.atkScore[numNought];
 							} else {
-								//luot nguoi choi. co numNought O => thu
+								//luot X choi. co numNought O => thu
 								this.defAtkScore[row][col + i] += this.defScore[numNought];
 							}
 						} else if (numCross != 0 && numNought == 0) { // computer = 0
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numCross X => thu
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numCross X => thu
 								this.defAtkScore[row][col + i] += this.defScore[numCross];
 							} else {
-								//luot nguoi choi. co Cross X => cong
+								//luot X choi. co Cross X => cong
 								this.defAtkScore[row][col + i] += this.atkScore[numCross];
 							}
 						}
@@ -221,19 +163,19 @@ public abstract class AIPlayer {
 				for (int i = 0; i < 5; i++) {
 					if (this.board[row + i][col] == Seed.EMPTY) {
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numNought O => cong
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numNought O => cong
 								this.defAtkScore[row + i][col] += this.atkScore[numNought];
 							} else {
-								//luot nguoi choi. co numNought O => thu
+								//luot X choi. co numNought O => thu
 								this.defAtkScore[row + i][col] += this.defScore[numNought];
 							}
 						} else if (numCross != 0 && numNought == 0) { // computer = 0
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numCross X => thu
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numCross X => thu
 								this.defAtkScore[row + i][col] += this.defScore[numCross];
 							} else {
-								//luot nguoi choi. co Cross X => cong
+								//luot X choi. co Cross X => cong
 								this.defAtkScore[row + i][col] += this.atkScore[numCross];
 							}
 						}
@@ -262,19 +204,19 @@ public abstract class AIPlayer {
 				for (int i = 0; i < 5; i++) {
 					if (this.board[row + i][col + i] == Seed.EMPTY) {
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numNought O => cong
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numNought O => cong
 								this.defAtkScore[row + i][col + i] += this.atkScore[numNought];
 							} else {
-								//luot nguoi choi. co numNought O => thu
+								//luot X choi. co numNought O => thu
 								this.defAtkScore[row + i][col + i] += this.defScore[numNought];
 							}
 						} else if (numCross != 0 && numNought == 0) { // computer = 0
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numCross X => thu
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numCross X => thu
 								this.defAtkScore[row + i][col + i] += this.defScore[numCross];
 							} else {
-								//luot nguoi choi. co Cross X => cong
+								//luot X choi. co Cross X => cong
 								this.defAtkScore[row + i][col + i] += this.atkScore[numCross];
 							}
 						}
@@ -299,19 +241,19 @@ public abstract class AIPlayer {
 				for (int i = 0; i < 5; i++) {
 					if (this.board[row + i][col - i] == Seed.EMPTY) {
 						if (numCross == 0 && numNought != 0) {
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numNought O => cong
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numNought O => cong
 								this.defAtkScore[row + i][col - i] += this.atkScore[numNought];
 							} else {
-								//luot nguoi choi. co numNought O => thu
+								//luot X choi. co numNought O => thu
 								this.defAtkScore[row + i][col - i] += this.defScore[numNought];
 							}
 						} else if (numCross != 0 && numNought == 0) { // computer = 0
-							if (thePlayer == this.mySeed) {
-								//luot may choi. co numCross X => thu
+							if (thePlayer == Seed.NOUGHT) {
+								//luot O choi. co numCross X => thu
 								this.defAtkScore[row + i][col - i] += this.defScore[numCross];
 							} else {
-								//luot nguoi choi. co Cross X => cong
+								//luot X choi. co Cross X => cong
 								this.defAtkScore[row + i][col - i] += this.atkScore[numCross];
 							}
 						}
@@ -343,29 +285,16 @@ public abstract class AIPlayer {
 				return Integer.compare(o2.score, o1.score);
 			}
 		});
-//
-//		 for(ValueMove vm : valMove) {
-//		 System.out.println(vm.score);
-//		 }
+		
 		int prevMax = Integer.MIN_VALUE;
 		int max = Integer.MIN_VALUE;
 		for (int i = 0; i < valMove.length - 1; i++) {
-			if (valMove[i].score == valMove[i + 1].score) {
-				moves.add(new Move(valMove[i].move.row, valMove[i].move.col));
-			} else {
-				moves.add(new Move(valMove[i].move.row, valMove[i].move.col));
-				if (moves.size() > 4) {
-					break;
-				}
+			moves.add(new Move(valMove[i].move.row, valMove[i].move.col));
+			if (valMove[i].score <= this.defScore[3]) {
+				break;
 			}
 		}
-
-//		 for(Move m : moves) {
-//		 System.out.println(m.row + " - " + m.col + " : " +
-//		 this.defAtkScore[m.row][m.col]);
-//		 }
-//		 System.out.println("\n\n");
-
+		
 		return moves;
 	}
 
@@ -412,14 +341,14 @@ public abstract class AIPlayer {
 							max = tempScoreBoard[row][col];
 							tempList.clear();
 							tempList.add(new Move(row, col));
-						}else if(tempScoreBoard[row][col] == max) {
+						}else if(tempScoreBoard[row][col] == max && this.board[row][col] == Seed.EMPTY) {
 							tempList.add(new Move(row, col));
 						}
 					}
 				}
-				if(tempList.size() > 1) {
-					i--;
-				}
+//				if(tempList.size() > 1) {
+//					i--;
+//				}
 				if(max >= this.atkScore[2]) {
 					for(Move move : tempList) {
 						moves.add(move);
@@ -435,7 +364,128 @@ public abstract class AIPlayer {
 			return moves;
 		}
 	}
-
+	
+	public List<Move> getCandidateAround(){
+		int radius = 1;
+		List<Move> moves = new ArrayList<Move>();
+		if (this.main.hasWon(mySeed, board) || this.main.hasWon(oppSeed, board)) {
+			return moves;
+		}
+		
+		int rowStart = this.ROWS - 1, rowEnd = 0, colStart = this.COLS - 1, colEnd = 0;
+		
+		//xac dinh kich thuoc khu co dang danh
+		for(int row = 0; row < this.ROWS; row++) {
+			for(int col = 0; col < this.COLS; col++) {
+				if(this.board[row][col] != Seed.EMPTY) {
+					if(row < rowStart) {
+						rowStart = row;
+					}
+					if(row > rowEnd) {
+						rowEnd = row;
+					}
+					if(col < colStart) {
+						colStart = col;
+					}
+					if(col > colEnd) {
+						colEnd = col;
+					}
+				}
+			}
+		}
+		
+		//duyet trong ban kinh 1
+		int rowOffset = 0, colOffset = 0;
+		if(rowStart != 0) {
+			rowOffset = -1;
+		}
+		if(colStart != 0) {
+			colOffset = -1;
+		}
+		
+//		System.out.println("Size: row: " + (rowStart + rowOffset) + " -> " + (rowEnd + 1) + "; col: " + (colStart + colOffset) + " -> " + (colEnd + 1));
+		
+		for(int i = rowStart + rowOffset; i <= rowEnd + 1 && i < this.ROWS; i++) {
+			for(int j = colStart + colOffset; j <= colEnd + 1 && j < this.COLS; j++) {
+				if(this.board[i][j] == Seed.EMPTY) {
+					moves.add(new Move(i, j));
+				}
+			}
+		}
+		
+		return moves;
+	}
+	
+	public List<Move> getCandidateAround1(){
+		List<Move> moves = new ArrayList<Move>();
+		if (this.main.hasWon(mySeed, board) || this.main.hasWon(oppSeed, board)) {
+			return moves;
+		}
+		
+		int rowOffset = 0;
+		int colOffset = 0;
+		boolean mark[][] = new boolean[this.ROWS][this.COLS];
+		//xac dinh kich thuoc khu co dang danh
+		for(int row = 0; row < this.ROWS; row++) {
+			for(int col = 0; col < this.COLS; col++) {
+				if(this.board[row][col] != Seed.EMPTY) {
+					rowOffset = 0; colOffset = 0;
+					if(row != 0) {
+						rowOffset = -1;
+					}
+					if(col != 0) {
+						colOffset = -1;
+					}
+					
+					for(int i = row + rowOffset; i <= row + 1 && i < this.ROWS; i++) {
+						for(int j = col + colOffset; j <= col + 1 && j < this.COLS; j++) {
+//							System.out.println(i + " - " + j);
+							if(this.board[i][j] == Seed.EMPTY && mark[i][j] == false) {
+								moves.add(new Move(i, j));
+								mark[i][j] = true;
+ 							}
+						}
+					}
+				}
+			}
+		}
+		return moves;
+	}
+	
+	public List<Move> getCandidateMoves2(Seed thePlayer) {
+		List<Move> moves = new ArrayList<Move>();
+		if (this.main.hasWon(mySeed, board) || this.main.hasWon(oppSeed, board) || this.main.isDraw()) {
+			return moves;
+		}
+		this.getDefAtkScore(thePlayer);
+		
+		int max = Integer.MIN_VALUE;
+		//find cell of cells have maximum score
+		for(int row = 0; row < this.ROWS; row++) {
+			for(int col = 0; col < this.COLS; col++) {
+				if(this.defAtkScore[row][col] > max && this.board[row][col] == Seed.EMPTY) {
+					max = this.defAtkScore[row][col];
+					moves.clear();
+					moves.add(new Move(row, col));
+				}else if(this.defAtkScore[row][col] == max) {
+					moves.add(new Move(row, col));
+				}
+			}
+		}
+		
+		Move m = moves.get(0);
+		return moves;
+	}
+	
+	
+	public List<Move> getCandidate(Seed thePlayer){
+		if(this.getCandidateMode == GetCandidateMode.AROUND1) {
+			return this.getCandidateAround1();
+		}else {
+			return this.getCandidateMoves1(thePlayer);
+		}
+	}
+	
 	public abstract Move move();
 
 	public void showBoardInfo(Seed thePlayer) {
@@ -449,7 +499,8 @@ public abstract class AIPlayer {
 			}
 			System.out.println();
 		}
-		System.out.println("\n-------------------\nThe Def Atk Score:\n");
+		
+//		System.out.println("\n-------------------\nThe Def Atk Score:\n");
 		this.getDefAtkScore(thePlayer);
 		for(int i = 0; i < this.ROWS; i++) {
 			for(int j = 0; j < this.COLS; j++) {
@@ -459,7 +510,7 @@ public abstract class AIPlayer {
 		}
 		
 		System.out.println("\n-------------------\nCandidate:\n");
-		List<Move> list = this.getCandidateMoves1(thePlayer);
+		List<Move> list = this.getCandidate(thePlayer);
 		for(Move m : list) {
 			System.out.println(m.toString() + "\t: " + this.defAtkScore[m.row][m.col]);
 		}
@@ -476,9 +527,9 @@ public abstract class AIPlayer {
 		int countPlayer, countOppPlayer;
 		for (String str : arr) {
 			for (int i = 0; i < this.pattern.length; i++) {
-				String tmp = this.parsePattern(i, Seed.CROSS);
+				String tmp = this.parsePattern(i, thePlayer);
 				countPlayer = this.numOfContain(str, tmp);
-				tmp = this.parsePattern(i, Seed.NOUGHT);
+				tmp = this.parsePattern(i, theOppPlayer);
 				countOppPlayer = this.numOfContain(str, tmp);
 				scorePlayer += countPlayer * this.scoreMetricPlayer[i];
 				scoreOpp += countOppPlayer * this.scoreMetricOpponent[i];
@@ -500,9 +551,9 @@ public abstract class AIPlayer {
 		int countPlayer, countOppPlayer;
 		for (String str : arr) {
 			for (int i = 0; i < this.pattern.length; i++) {
-				String tmp = this.parsePattern(i, Seed.NOUGHT);
+				String tmp = this.parsePattern(i, this.mySeed);
 				countPlayer = this.numOfContain(str, tmp);
-				tmp = this.parsePattern(i, Seed.CROSS);
+				tmp = this.parsePattern(i, this.oppSeed);
 				countOppPlayer = this.numOfContain(str, tmp);
 				scorePlayer += countPlayer * this.scoreMetricPlayer[i];
 				scoreOpp += countOppPlayer * this.scoreMetricOpponent[i];

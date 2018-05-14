@@ -1,3 +1,4 @@
+import java.time.chrono.ThaiBuddhistEra;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -5,18 +6,22 @@ import java.util.List;
 
 public class AIPlayerMiniMax extends AIPlayer {
 
-	public AIPlayerMiniMax(GameMain main) {
-		super(main);
+	public AIPlayerMiniMax(GameMain main, Seed computer) {
+		super(main, computer);
 	}
 
 	@Override
 	public Move move() {
-//		ValueMove result = this.minimax(4, mySeed);
 		this.countSoNhanhDuyet = 0;
 		this.countTongSoNut = 0;
 		this.countSoLanCatTia = 0;
 		long lStartTime = System.currentTimeMillis();
-		ValueMove result = this.minimax(this.MAX_DEPTH, this.mySeed, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		ValueMove result = null;
+		if(this.aiMode == AIMode.ALPHABETA) {
+			result = this.minimax(this.MAX_DEPTH, this.mySeed, Integer.MIN_VALUE, Integer.MAX_VALUE);
+		}else {
+			result = this.minimax1(this.MAX_DEPTH, mySeed);
+		}
 		long lEndTime = System.currentTimeMillis();
 		this.time = lEndTime - lStartTime;
 		this.main.dboGame.addInfo(this.countSoUngCuVien, this.countTongSoNut, this.countSoNhanhDuyet, this.time);
@@ -30,9 +35,9 @@ public class AIPlayerMiniMax extends AIPlayer {
 	}
 
 	public ValueMove minimax(int depth, Seed player) {
+		
 		// Generate possible next moves in a List<Move>
-		this.showBoardInfo(player);
-		List<Move> candidateMoves = this.getCandidateMoves(player);
+		List<Move> candidateMoves = this.getCandidate(player);
 		
 		// mySeed is maximizing; while OppSeed is minizing
 		int bestScore = (player == this.mySeed) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
@@ -40,7 +45,7 @@ public class AIPlayerMiniMax extends AIPlayer {
 		int bestRow = -1;
 		int bestCol = -1;
 		if (candidateMoves.isEmpty() || depth == 0) {
-			bestScore = this.evaluate(player);
+			bestScore = this.evaluate();
 			System.out.println("EMPTY");
 		} else {
 			for (Move move : candidateMoves) {
@@ -67,11 +72,64 @@ public class AIPlayerMiniMax extends AIPlayer {
 		return new ValueMove(bestScore, bestRow, bestCol);
 	}
 
+	public ValueMove minimax1(int depth, Seed player) {
+		// Generate possible next moves in a List<Move>
+		Seed opp = (player == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
+		List<Move> candidateMoves = this.getCandidate(player);
+		if(depth != 0) {
+			this.countTongSoNut += candidateMoves.size();			
+		}
+		// mySeed is maximizing; while OppSeed is minizing
+		int score;
+		int bestScore = (player == this.mySeed) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+		int bestRow = -1;
+		int bestCol = -1;
+
+		if (depth == this.MAX_DEPTH) {
+			this.countSoUngCuVien = candidateMoves.size();
+		}
+
+		if (candidateMoves.size() == 1 && depth == this.MAX_DEPTH) {
+			this.countSoNhanhDuyet++;
+			return new ValueMove(0, candidateMoves.get(0).row, candidateMoves.get(0).col);
+		}
+		if (candidateMoves.isEmpty() || depth == 0) {
+			score = this.evaluate();
+			return new ValueMove(score, bestRow, bestCol);
+		} else {
+			for (Move move : candidateMoves) {
+				this.countSoNhanhDuyet++;
+				board[move.row][move.col] = player;
+				if (player == this.mySeed) { // mySeed computer - maximizing
+					score = minimax1(depth - 1, opp).score;
+					if (score > bestScore) {
+						bestScore = score;
+						bestRow = move.row;
+						bestCol = move.col;
+					}
+				} else { // oppSeed - minizing
+					score = minimax1(depth - 1, opp).score;
+					if (score < bestScore) {
+						bestScore = score;
+						bestRow = move.row;
+						bestCol = move.col;
+					}
+				}
+				// undo
+				board[move.row][move.col] = Seed.EMPTY;
+			}
+		}
+
+		return new ValueMove(bestScore, bestRow, bestCol);
+	}
+	
 	public ValueMove minimax(int depth, Seed player, int alpha, int beta) {
 		// Generate possible next moves in a List<Move>
 		Seed opp = (player == Seed.CROSS) ? Seed.NOUGHT : Seed.CROSS;
-		List<Move> candidateMoves = this.getCandidateMoves1(player);
-		this.countTongSoNut += candidateMoves.size();
+		List<Move> candidateMoves = this.getCandidate(player);
+		if(depth !=  0) {
+			this.countTongSoNut += candidateMoves.size();
+		}
 		// mySeed is maximizing; while OppSeed is minizing
 		int score;
 		int bestRow = -1;
@@ -87,12 +145,6 @@ public class AIPlayerMiniMax extends AIPlayer {
 		}
 		if (candidateMoves.isEmpty() || depth == 0) {
 			score = this.evaluate();
-//			if(this.main.whoWon() == this.mySeed) {
-//				score += this.scoreMetricPlayer[this.scoreMetricPlayer.length - 1] * depth;
-//			}
-//			if(this.main.whoWon() == this.mySeed) {
-//				score -= this.scoreMetricPlayer[this.scoreMetricPlayer.length - 1] * depth;
-//			}
 			return new ValueMove(score, bestRow, bestCol);
 		} else {
 			for (Move move : candidateMoves) {
@@ -111,10 +163,9 @@ public class AIPlayerMiniMax extends AIPlayer {
 						beta = score;
 						bestRow = move.row;
 						bestCol = move.col;
-						if(depth == this.MAX_DEPTH - 1) {
-							System.out.println("Eval cross move: " + bestRow + " - " + bestCol);
-							this.main.nextMove = new Move(bestRow, bestCol);
-						}
+//						if(depth == this.MAX_DEPTH - 1) {
+//							System.out.println("Eval cross move: " + bestRow + " - " + bestCol);
+//						}
 					}
 				}
 				// undo
